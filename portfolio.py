@@ -5,33 +5,20 @@ from requests import Request, Session
 import json
 import pprint
 
-##### Load CMC Data #####
-url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
-
-parameters = {
-    "symbol": 'BTC,ETH,ADA,XMR',
-    "convert": "USD"
-}
-
-headers = {
-    'Accepts':'application/json', #telling CMC API that we want json format in response
-    'X-CMC_PRO_API_KEY': 'c57ac442-3e7c-4a75-8d1f-a18e34b9bce6' #Auth token -
-    }
-
 ##### Load Transaction Data #####
-file_curr = './transactions.csv'
-
 @st.cache(persist=True)
 def load_transaction_data():
+    file_curr = './transactions.csv'
     df = pd.read_csv(file_curr)
     #del df['Unnamed: 0']
     return df
 
+##### Load CMC Data #####
 def load_CMC_data():
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
 
     parameters = {
-        "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK',
+        "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR',
         "convert": "USD"
     }
 
@@ -73,26 +60,41 @@ def priceData():
     st.title("Current Crypto Prices")
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Bitcoin", "$"+str(round(prices['data']['BTC']['quote']['USD']['price'], 2)), str(round(prices['data']['BTC']['quote']['USD']['percent_change_24h'], 2))+"%")
+    col1.metric("Bitcoin", "$"+getMetric('BTC', 'price'), getMetric('BTC', 'percent_change_24h')+"%")
     with col1.expander("BTC Metrics"):
-        getMetrics("BTC")
-    col1.metric("Monero", "$"+str(round(prices['data']['XMR']['quote']['USD']['price'], 2)), str(round(prices['data']['XMR']['quote']['USD']['percent_change_24h'], 2))+"%")
+        getAllMetrics("BTC")
+
+    col1.metric("Monero", "$"+getMetric('XMR', 'price'), getMetric('XMR', 'percent_change_24h')+"%")
     with col1.expander("XMR Metrics"):
-        getMetrics("XMR")
+        getAllMetrics("XMR")
 
-    col2.metric("Ethereum", "$"+str(round(prices['data']['ETH']['quote']['USD']['price'], 2)), str(round(prices['data']['ETH']['quote']['USD']['percent_change_24h'], 2))+"%")
+    col1.metric("VeChain", "$"+getMetric('VET', 'price'), getMetric('VET', 'percent_change_24h')+"%")
+    with col1.expander("VET Metrics"):
+        getAllMetrics("VET")
+
+    col2.metric("Ethereum", "$"+getMetric('ETH', 'price'), getMetric('ETH', 'percent_change_24h')+"%")
     with col2.expander("ETH Metrics"):
-        getMetrics("ETH")
-    col2.metric("Ergo", "$"+str(round(prices['data']['ERG']['quote']['USD']['price'], 2)), str(round(prices['data']['ERG']['quote']['USD']['percent_change_24h'], 2))+"%")
-    with col2.expander("ERG Metrics"):
-        getMetrics("ERG")
+        getAllMetrics("ETH")
 
-    col3.metric("Cardano", "$"+str(round(prices['data']['ADA']['quote']['USD']['price'], 2)), str(round(prices['data']['ADA']['quote']['USD']['percent_change_24h'], 2))+"%")
+    col2.metric("Ergo", "$"+getMetric('ERG', 'price'), getMetric('ERG', 'percent_change_24h')+"%")
+    with col2.expander("ERG Metrics"):
+        getAllMetrics("ERG")
+
+    col2.metric("Algorand", "$"+getMetric('ALGO', 'price'), getMetric('ALGO', 'percent_change_24h')+"%")
+    with col2.expander("ALGO Metrics"):
+        getAllMetrics("ALGO")
+
+    col3.metric("Cardano", "$"+getMetric('ADA', 'price'), getMetric('ADA', 'percent_change_24h')+"%")
     with col3.expander("ADA Metrics"):
-        getMetrics("ADA")
-    col3.metric("Chainlink", "$"+str(round(prices['data']['LINK']['quote']['USD']['price'], 2)), str(round(prices['data']['LINK']['quote']['USD']['percent_change_24h'], 2))+"%")
+        getAllMetrics("ADA")
+
+    col3.metric("Chainlink", "$"+getMetric('LINK', 'price'), getMetric('LINK', 'percent_change_24h')+"%")
     with col3.expander("LINK Metrics"):
-        getMetrics("LINK")
+        getAllMetrics("LINK")
+
+    col3.metric("Hedera Hashgraph", "$"+getMetric('HBAR', 'price'), getMetric('HBAR', 'percent_change_24h')+"%")
+    with col3.expander("HBAR Metrics"):
+        getAllMetrics("HBAR")
 
 def showData(owner, investment):
     port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca"}
@@ -124,13 +126,22 @@ def getTotalAmount(df):
         total += float(str(i).replace(',',''))
     return total
 
-def getMetrics(tick):
+def getAllMetrics(tick):
     for i in prices['data'][tick]['quote']['USD']:
         if i != 'last_updated':
             st.write(i.replace("_", " ").capitalize() + ": " + str(round(prices['data'][tick]['quote']['USD'][i], 2)))
 
 def showResources():
-    pass
+    st.subheader("What is Blockchain?")
+    st.video('https://www.youtube.com/watch?v=SSo_EIwHSd4')
+    st.subheader("Proof-of-Work")
+    st.video('https://www.youtube.com/watch?v=3EUAcxhuoU4')
+    st.subheader('Proof-of-Stake')
+    st.video('https://www.youtube.com/watch?v=M3EFi_POhps')
+
+def getMetric(tick, metric):
+    metric = str(round(prices['data'][tick]['quote']['USD'][metric], 2))
+    return metric
 
 if __name__ == "__main__":
     main()
