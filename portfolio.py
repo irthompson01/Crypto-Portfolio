@@ -55,16 +55,19 @@ def main():
     st.sidebar.title("Select a Portfolio:")
     portfolio = st.sidebar.selectbox(
      '',
-     ('Home','Ross & Amy', 'Casey y Luca'))
+     ('Home','Ross & Amy', 'Casey y Luca', 'Resources'))
 
     if portfolio == 'Home':
          priceData()
 
     elif portfolio == 'Ross & Amy':
-        showData("RA")
+        showData("RA", "2,500")
 
     elif portfolio == 'Casey y Luca':
-        showData("CL")
+        showData("CL", "3,000")
+
+    elif portfolio == 'Resources':
+        showResources()
 
 def priceData():
     st.title("Current Crypto Prices")
@@ -91,13 +94,13 @@ def priceData():
     with col3.expander("LINK Metrics"):
         getMetrics("LINK")
 
-def showData(owner):
+def showData(owner, investment):
     port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca"}
     st.title(port_dict[owner] + "'s Crypto Portfolio")
     sub = df[df['Owner'] == owner]
 
     ##### Total Invested/Current Value #####
-    st.header("Investment: $" + str(2500))
+    st.header("Investment: $" + investment)
 
 
     ##### Breakdown by Coin #####
@@ -125,6 +128,9 @@ def getMetrics(tick):
     for i in prices['data'][tick]['quote']['USD']:
         if i != 'last_updated':
             st.write(i.replace("_", " ").capitalize() + ": " + str(round(prices['data'][tick]['quote']['USD'][i], 2)))
+
+def showResources():
+    pass
 
 if __name__ == "__main__":
     main()
