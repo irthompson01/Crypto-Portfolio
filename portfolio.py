@@ -6,7 +6,7 @@ import json
 import pprint
 
 ##### Load Transaction Data #####
-@st.cache(persist=True)
+#@st.cache(persist=True)
 def load_transaction_data():
     file_curr = './transactions.csv'
     df = pd.read_csv(file_curr)
@@ -38,6 +38,7 @@ df = load_transaction_data()
 
 
 def main():
+
     #st.write(response['data']['XMR']['quote']['USD']['price'])
     st.sidebar.title("Select a Portfolio:")
     portfolio = st.sidebar.selectbox(
@@ -83,8 +84,8 @@ def showData(owner, investment):
         col1, col2 = st.columns(2)
         sub_tick = sub[sub['Symbol'] == tick]
         total = getTotalAmount(sub_tick)
-        col1.metric(tick, total)
-        col2.metric("Value (USD)", round(total*prices['data'][tick]['quote']['USD']['price'], 2))
+        col1.metric(tick, "{:,}".format(total))
+        col2.metric("Value (USD)", "$"+ str("{:,}".format(round(total*prices['data'][tick]['quote']['USD']['price'], 2))))
 
 
     #st.dataframe(sum_amount)
