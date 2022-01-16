@@ -18,7 +18,7 @@ def load_CMC_data():
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
 
     parameters = {
-        "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR',
+        "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR,BNB,SOL,XRP,DOT,MATIC,CRO,FIL,ONE,LRC,LOOKS',
         "convert": "USD"
     }
 
@@ -58,43 +58,15 @@ def main():
 
 def priceData():
     st.title("Current Crypto Prices")
+    col1, col2, col3, col4 = st.columns(4)
+    cols = [col1, col2, col3, col4]
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Bitcoin", "$"+getMetric('BTC', 'price'), getMetric('BTC', 'percent_change_24h')+"%")
-    with col1.expander("BTC Metrics"):
-        getAllMetrics("BTC")
+    ticks = [tick for tick in prices['data']]
 
-    col1.metric("Monero", "$"+getMetric('XMR', 'price'), getMetric('XMR', 'percent_change_24h')+"%")
-    with col1.expander("XMR Metrics"):
-        getAllMetrics("XMR")
+    for t in range(len(ticks)):
+        adj = t%len(cols)
+        displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
 
-    col1.metric("VeChain", "$"+getMetric('VET', 'price'), getMetric('VET', 'percent_change_24h')+"%")
-    with col1.expander("VET Metrics"):
-        getAllMetrics("VET")
-
-    col2.metric("Ethereum", "$"+getMetric('ETH', 'price'), getMetric('ETH', 'percent_change_24h')+"%")
-    with col2.expander("ETH Metrics"):
-        getAllMetrics("ETH")
-
-    col2.metric("Ergo", "$"+getMetric('ERG', 'price'), getMetric('ERG', 'percent_change_24h')+"%")
-    with col2.expander("ERG Metrics"):
-        getAllMetrics("ERG")
-
-    col2.metric("Algorand", "$"+getMetric('ALGO', 'price'), getMetric('ALGO', 'percent_change_24h')+"%")
-    with col2.expander("ALGO Metrics"):
-        getAllMetrics("ALGO")
-
-    col3.metric("Cardano", "$"+getMetric('ADA', 'price'), getMetric('ADA', 'percent_change_24h')+"%")
-    with col3.expander("ADA Metrics"):
-        getAllMetrics("ADA")
-
-    col3.metric("Chainlink", "$"+getMetric('LINK', 'price'), getMetric('LINK', 'percent_change_24h')+"%")
-    with col3.expander("LINK Metrics"):
-        getAllMetrics("LINK")
-
-    col3.metric("Hedera Hashgraph", "$"+getMetric('HBAR', 'price'), getMetric('HBAR', 'percent_change_24h')+"%")
-    with col3.expander("HBAR Metrics"):
-        getAllMetrics("HBAR")
 
 def showData(owner, investment):
     port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca"}
@@ -119,6 +91,10 @@ def showData(owner, investment):
     st.write("Transaction History")
     st.dataframe(sub)
 
+def getSlug(tick):
+    slug = prices['data'][tick]['slug'].capitalize()
+    return slug
+
 def getTotalAmount(df):
     sum_amount = df['Amount']
     total = 0
@@ -131,6 +107,15 @@ def getAllMetrics(tick):
         if i != 'last_updated':
             st.write(i.replace("_", " ").capitalize() + ": " + str(round(prices['data'][tick]['quote']['USD'][i], 2)))
 
+def displayMetric(col, tick, slug):
+    col.metric(slug  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
+    with col.expander(str(tick) + " Metrics"):
+        getAllMetrics(tick)
+
+def getMetric(tick, metric):
+    metric = "{:,}".format(round(prices['data'][tick]['quote']['USD'][metric], 2))
+    return str(metric)
+
 def showResources():
     st.subheader("What is Blockchain?")
     st.video('https://www.youtube.com/watch?v=SSo_EIwHSd4')
@@ -139,9 +124,6 @@ def showResources():
     st.subheader('Proof-of-Stake')
     st.video('https://www.youtube.com/watch?v=M3EFi_POhps')
 
-def getMetric(tick, metric):
-    metric = str(round(prices['data'][tick]['quote']['USD'][metric], 2))
-    return metric
 
 if __name__ == "__main__":
     main()
