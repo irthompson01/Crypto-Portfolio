@@ -4,6 +4,7 @@ import pandas as pd
 from requests import Request, Session
 import json
 import pprint
+import pycoingecko
 from pycoingecko import CoinGeckoAPI
 import time
 from datetime import datetime
@@ -66,7 +67,7 @@ def getCGChart(slug):
 def main():
 
     ##### COINGECKO API & CHART TEST #####
-    
+
     ##### SIDEBAR #####
     st.sidebar.title("Select a Portfolio:")
     portfolio = st.sidebar.selectbox(
