@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 import tzlocal
 import altair as alt
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 ##### Load Transaction Data #####
