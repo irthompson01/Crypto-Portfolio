@@ -8,8 +8,7 @@ import pprint
 # from pycoingecko import CoinGeckoAPI
 import time
 from datetime import datetime
-import tzlocal
-import altair as alt
+
 #import matplotlib.pyplot as plt
 
 
@@ -46,28 +45,33 @@ def load_CMC_data():
 prices = load_CMC_data()
 df = load_transaction_data()
 
-# def getCGChart(slug):
-#     cg = CoinGeckoAPI()
-#     coins = cg.get_coins_list()
-#     coins_df = pd.DataFrame(coins)
-#     #x = cg.get_price(ids='bi', vs_currencies='usd')
-#     #ids = cg.get_coins_list()
-#     coin = cg.get_coin_market_chart_range_by_id(slug, 'usd', 1610851418, 1642387418)
-#
-#     dates = [data[0] for data in coin['prices']]
-#     dailyprice = [data[1] for data in coin['prices']]
-#
-#     d = {"Dates": dates, "Price": dailyprice}
-#     chart_data = pd.DataFrame(d)
-#
-#     fig, ax = plt.subplots()
-#     ax.plot(dates, dailyprice)
-#     st.pyplot(fig)
+def getCGChart(slug):
+    cg = CoinGeckoAPI()
+    coins = cg.get_coins_list()
+    coins_df = pd.DataFrame(coins)
+    #x = cg.get_price(ids='bi', vs_currencies='usd')
+    #ids = cg.get_coins_list()
+    coin = cg.get_coin_market_chart_range_by_id(slug, 'usd', 1610851418, 1642387418)
+
+    dates = [data[0] for data in coin['prices']]
+    dailyprice = [data[1] for data in coin['prices']]
+
+    d = {"Dates": dates, "Price": dailyprice}
+    chart_data = pd.DataFrame(d)
+
+    fig, ax = plt.subplots()
+    ax.plot(dates, dailyprice)
+    st.pyplot(fig)
 
 def main():
 
     ##### COINGECKO API & CHART TEST #####
-
+    st.set_page_config(
+     page_title="Crypto Portfolio",
+     page_icon="🧊",
+     layout="wide"
+ )
+    ##  9285011099Seismic# ##
     ##### SIDEBAR #####
     st.sidebar.title("Select a Portfolio:")
     portfolio = st.sidebar.selectbox(
@@ -152,7 +156,8 @@ def displayMetric(col, tick, slug):
         getAllMetrics(tick)
 
     #st.write(slug)
-    #with col.expander(str(tick) + " Chart"):
+    # with col.expander(str(tick) + " Chart"):
+    #     getCGChart(slug)
 
 
 def getMetric(tick, metric):
