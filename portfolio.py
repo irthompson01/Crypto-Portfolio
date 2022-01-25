@@ -8,15 +8,18 @@ import pprint
 # from pycoingecko import CoinGeckoAPI
 import time
 from datetime import datetime
-
 #import matplotlib.pyplot as plt
 
+##### Set Page Config #####
+st.set_page_config(
+ page_title="Crypto Portfolio",
+ page_icon="🧊",
+ layout="wide"
+)
+
+##### Custom Style #####
 
 ##### Load Transaction Data #####
-#@st.cache(persist=True)
-
-
-
 def load_transaction_data():
     file_curr = './transactions.csv'
     df = pd.read_csv(file_curr)
@@ -65,14 +68,10 @@ def getCGChart(slug):
 
 def main():
 
-    ##### COINGECKO API & CHART TEST #####
-    st.set_page_config(
-     page_title="Crypto Portfolio",
-     page_icon="🧊",
-     layout="wide"
- )
+
     ##  9285011099Seismic# ##
     ##### SIDEBAR #####
+
     st.sidebar.title("Select a Portfolio:")
     portfolio = st.sidebar.selectbox(
      '',
@@ -91,8 +90,10 @@ def main():
         showResources()
 
 def priceData():
+    with open('./metric/style.css') as f:
+        st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
     st.title("Current Crypto Prices")
-    col1, col2, col3, col4 = st.columns([1,1,1,1])
+    col1, col2, col3, col4 = st.columns([1,1,1, 1])
     cols = [col1, col2, col3, col4]
 
     ticks = [tick for tick in prices['data']]
@@ -101,8 +102,11 @@ def priceData():
         adj = t%len(cols)
         displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
 
+    f.close()
 
 def showData(owner, investment):
+    with open('./showData/style.css') as f:
+        st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
     port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca"}
     st.title(port_dict[owner] + "'s Crypto Portfolio")
     sub = df[df['Owner'] == owner]
@@ -119,7 +123,7 @@ def showData(owner, investment):
     col2.subheader("Price")
     col3.subheader("Value (USD)")
     for tick in cryptos:
-
+        col1, col2, col3 = st.columns(3)
         sub_tick = sub[sub['Symbol'] == tick]
         total = getTotalAmount(sub_tick)
 
@@ -151,9 +155,11 @@ def getAllMetrics(tick):
             st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
 
 def displayMetric(col, tick, slug):
-    col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
-    with col.expander(str(tick) + " Metrics"):
-        getAllMetrics(tick)
+
+    with st.container():
+        col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
+        with col.expander(str(tick) + " Metrics"):
+            getAllMetrics(tick)
 
     #st.write(slug)
     # with col.expander(str(tick) + " Chart"):
