@@ -1,2 +1,7 @@
 streamlit == 1.4
 pycoingecko
+pprint
+time
+datetime
+requests
+pandas
