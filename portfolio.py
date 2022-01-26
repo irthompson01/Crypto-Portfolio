@@ -4,8 +4,8 @@ import pandas as pd
 from requests import Request, Session
 import json
 import pprint
-# import pycoingecko
-# from pycoingecko import CoinGeckoAPI
+import pycoingecko
+from pycoingecko import CoinGeckoAPI
 import time
 from datetime import datetime
 #import matplotlib.pyplot as plt
