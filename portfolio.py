@@ -17,7 +17,7 @@ st.set_page_config(
  layout="wide"
 )
 
-##### Custom Style #####
+# https://github.com/tapaco/marametrics
 
 ##### Load Transaction Data #####
 def load_transaction_data():
@@ -75,7 +75,7 @@ def main():
     st.sidebar.title("Select a Portfolio:")
     portfolio = st.sidebar.selectbox(
      '',
-     ('Home','Ross & Amy', 'Casey y Luca', 'Resources'))
+     ('Home','Ross & Amy', 'Casey y Luca', 'Smidget', 'Resources'))
 
     if portfolio == 'Home':
          priceData()
@@ -86,12 +86,17 @@ def main():
     elif portfolio == 'Casey y Luca':
         showData("CL", "3,000")
 
+    elif portfolio == 'Smidget':
+        showData("BT", "100")
+
     elif portfolio == 'Resources':
         showResources()
 
 def priceData():
+    ##### Custom Style #####
     with open('./metric/style.css') as f:
         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
+
     st.title("Current Crypto Prices")
     col1, col2, col3, col4 = st.columns([1,1,1, 1])
     cols = [col1, col2, col3, col4]
@@ -105,16 +110,16 @@ def priceData():
     f.close()
 
 def showData(owner, investment):
+    ##### Custom Style #####
     with open('./showData/style.css') as f:
         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
-    port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca"}
+
+    port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca", "BT": "Smidget"}
     st.title(port_dict[owner] + "'s Crypto Portfolio")
     sub = df[df['Owner'] == owner]
 
-
     ##### Total Invested/Current Value #####
     st.header("Investment: $" + investment)
-
 
     ##### Breakdown by Coin #####
     cryptos = sub["Symbol"].unique()
@@ -122,6 +127,7 @@ def showData(owner, investment):
     col1.subheader("Asset")
     col2.subheader("Price")
     col3.subheader("Value (USD)")
+
     for tick in cryptos:
         col1, col2, col3 = st.columns(3)
         sub_tick = sub[sub['Symbol'] == tick]
@@ -171,12 +177,15 @@ def getMetric(tick, metric):
     return str(metric)
 
 def showResources():
-    st.subheader("What is Blockchain?")
-    st.video('https://www.youtube.com/watch?v=SSo_EIwHSd4')
-    st.subheader("Proof-of-Work")
-    st.video('https://www.youtube.com/watch?v=3EUAcxhuoU4')
-    st.subheader('Proof-of-Stake')
-    st.video('https://www.youtube.com/watch?v=M3EFi_POhps')
+    col1, col2 = st.columns(2)
+    col1.subheader("What is Blockchain?")
+    col1.video('https://www.youtube.com/watch?v=SSo_EIwHSd4')
+    col2.subheader("Proof-of-Work")
+    col2.video('https://www.youtube.com/watch?v=3EUAcxhuoU4')
+    col1.subheader('Proof-of-Stake')
+    col1.video('https://www.youtube.com/watch?v=M3EFi_POhps')
+    col2.subheader('What is Cardano?')
+    col2.video('https://www.youtube.com/watch?v=Do8rHvr65ZA')
 
 
 if __name__ == "__main__":
