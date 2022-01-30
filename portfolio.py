@@ -8,6 +8,7 @@ import pycoingecko
 from pycoingecko import CoinGeckoAPI
 import time
 from datetime import datetime
+import altair as alt
 #import matplotlib.pyplot as plt
 
 ##### Set Page Config #####
@@ -45,26 +46,18 @@ def load_CMC_data():
     response = json.loads(response.text)
     return response
 
+@st.cache(allow_output_mutation=True)
+def load_CG_data():
+    cg = CoinGeckoAPI()
+    data = pd.DataFrame(cg.get_coins_markets(vs_currency = 'usd', order='market_cap_desc', price_change_percentage='1h,24h,7d,14d,30d,200d,1y'))
+    data['symbol'] = data['symbol'].str.upper()
+    data = data.reset_index()
+    return data
+
 prices = load_CMC_data()
 df = load_transaction_data()
+data = load_CG_data()
 
-def getCGChart(slug):
-    cg = CoinGeckoAPI()
-    coins = cg.get_coins_list()
-    coins_df = pd.DataFrame(coins)
-    #x = cg.get_price(ids='bi', vs_currencies='usd')
-    #ids = cg.get_coins_list()
-    coin = cg.get_coin_market_chart_range_by_id(slug, 'usd', 1610851418, 1642387418)
-
-    dates = [data[0] for data in coin['prices']]
-    dailyprice = [data[1] for data in coin['prices']]
-
-    d = {"Dates": dates, "Price": dailyprice}
-    chart_data = pd.DataFrame(d)
-
-    fig, ax = plt.subplots()
-    ax.plot(dates, dailyprice)
-    st.pyplot(fig)
 
 def main():
 
@@ -78,7 +71,8 @@ def main():
      ('Home','Ross & Amy', 'Casey y Luca', 'Smidget', 'Resources'))
 
     if portfolio == 'Home':
-         priceData()
+         #priceData()
+         priceDataCG()
 
     elif portfolio == 'Ross & Amy':
         showData("RA", "2,500")
@@ -92,24 +86,35 @@ def main():
     elif portfolio == 'Resources':
         showResources()
 
-def priceData():
+
+def priceDataCG():
     ##### Custom Style #####
     with open('./metric/style.css') as f:
         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
 
     st.title("Current Crypto Prices")
-    col1, col2, col3, col4 = st.columns([1,1,1, 1])
-    cols = [col1, col2, col3, col4]
+    col1, col2, col3 = st.columns(3)
+    cols = [col1, col2, col3]# col3, col4]
 
-    ticks = [tick for tick in prices['data']]
+    symbols = ['BTC','ETH','ADA','XMR','ERG','LINK','VET','ALGO','LTC','HBAR','SOL','XRP','BNB','DOT','CRO','MATIC','FIL','ONE','LRC','LOOKS']
+    #data_sub = data[data['symbol'].str.upper() in symbols]
+    boolean_series = data['symbol'].isin(symbols)
+    filtered_data = data[boolean_series]
+    count = 0
+    for index, row in filtered_data.iterrows():
 
-    for t in range(len(ticks)):
-        adj = t%len(cols)
-        displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
+        adj = count%len(cols)
+        coin_data = row
+        count += 1
+        displayCGMetric(cols[adj], coin_data['symbol'].upper(), coin_data['name'], coin_data)
 
     f.close()
 
 def showData(owner, investment):
+    '''
+    Candle Stick Chart:         https://altair-viz.github.io/gallery/candlestick_chart.html
+    Area Chart With Gradient:   https://altair-viz.github.io/gallery/area_chart_gradient.html
+    '''
     ##### Custom Style #####
     with open('./showData/style.css') as f:
         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
@@ -155,22 +160,66 @@ def getTotalAmount(df):
         total += float(str(i).replace(',',''))
     return total
 
-def getAllMetrics(tick):
-    for i in prices['data'][tick]['quote']['USD']:
-        if i != 'last_updated':
-            st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
-
-def displayMetric(col, tick, slug):
+def displayCGMetric(col, tick, slug, coin_data):
 
     with st.container():
-        col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
-        with col.expander(str(tick) + " Metrics"):
-            getAllMetrics(tick)
+        new_col1, new_col2 = st.columns(2)
+        col.image(coin_data['image'], width = 50)
+        col.metric(str(coin_data['market_cap_rank']) + '. ' + slug.capitalize()  + '-' + tick, "$"+str("{:,}".format(coin_data['current_price'])), str("{:,}".format(round(coin_data['price_change_percentage_24h_in_currency'], 2),',')+"%"))
 
+        with col.expander(str(tick) + " Chart(7d)"):
+            st.altair_chart(getCGChart(coin_data['id']))
+
+        with col.expander(str(tick) + " Metrics"):
+            getAllCGMetrics(coin_data)
+
+def getAllCGMetrics(coin_data):
+    bad_keys = ['index', 'id', 'symbol', 'market_cap_rank', 'name', 'image', 'ath_date', 'atl_date', 'roi', 'last_updated', 'fully_diluted_valuation']
+    for key in coin_data.keys():
+        if key not in bad_keys:
+            st.write(key.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(coin_data[key],2))))
     #st.write(slug)
     # with col.expander(str(tick) + " Chart"):
     #     getCGChart(slug)
 
+def getCGChart(id):
+    cg = CoinGeckoAPI()
+    chart_data = pd.DataFrame(cg.get_coin_market_chart_by_id(id, 'usd', 7))
+
+    chart_data['index'] = range(0, len(chart_data))
+
+    chart_data['Timestamp'] = [chart_data['prices'][i][0] for i in range(0,len(chart_data))]
+    chart_data['Date'] = pd.to_datetime(chart_data['Timestamp'])
+
+    chart_data['Price'] = [chart_data['prices'][i][1] for i in range(0,len(chart_data))]
+    chart_data['Price Format'] = [ "$"+str("{:,}".format(round(chart_data['Price'][i], 2))) for i in range(0,len(chart_data))]
+    chart_data['Market Cap'] = [chart_data['market_caps'][i][1] for i in range(0,len(chart_data))]
+    chart_data['Volume'] = [chart_data['total_volumes'][i][1] for i in range(0,len(chart_data))]
+
+    if chart_data['Price'][0] < chart_data['Price'][len(chart_data)-1]:
+        line_color = 'darkgreen'
+    else:
+        line_color = 'darkred'
+
+    chart = alt.Chart(chart_data).configure(background='black').mark_area(
+            line={'color':line_color},
+            color=alt.Gradient(
+                gradient='linear',
+                stops=[alt.GradientStop(color='white', offset=0),
+                       alt.GradientStop(color=line_color, offset=1)],
+                x1=1,
+                x2=1,
+                y1=1,
+                y2=0
+            )
+        ).encode(
+            alt.X('index:Q', axis = alt.Axis(tickMinStep=10, title='', gridColor='darkgrey', gridOpacity=0.6)),
+            alt.Y('Price:Q', axis = alt.Axis(tickCount=4, gridColor='darkgrey', gridOpacity=0.6, labelColor='white'),
+                  scale=alt.Scale(domain=[chart_data['Price'].min(), chart_data['Price'].max()])),
+            tooltip = alt.Tooltip('Price Format:N', title='Price')
+            ).properties(width=300, height=200)
+
+    return chart
 
 def getMetric(tick, metric):
     metric = "{:,}".format(round(prices['data'][tick]['quote']['USD'][metric], 2))
@@ -187,6 +236,35 @@ def showResources():
     col2.subheader('What is Cardano?')
     col2.video('https://www.youtube.com/watch?v=Do8rHvr65ZA')
 
+
+def priceData():
+    ##### Custom Style #####
+    with open('./metric/style.css') as f:
+        st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
+
+    st.title("Current Crypto Prices")
+    col1, col2, col3, col4 = st.columns([1,1,1, 1])
+    cols = [col1, col2, col3, col4]
+
+    ticks = [tick for tick in prices['data']]
+
+    for t in range(len(ticks)):
+        adj = t%len(cols)
+        displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
+
+    f.close()
+
+def displayMetric(col, tick, slug):
+
+    with st.container():
+        col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
+        with col.expander(str(tick) + " Metrics"):
+            getAllMetrics(tick)
+
+def getAllMetrics(tick):
+    for i in prices['data'][tick]['quote']['USD']:
+        if i != 'last_updated':
+            st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
 
 if __name__ == "__main__":
     main()
