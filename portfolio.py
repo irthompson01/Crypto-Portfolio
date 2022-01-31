@@ -63,8 +63,6 @@ data = load_CG_data()
 
 
 def main():
-
-
     ##  9285011099Seismic# ##
     ##### SIDEBAR #####
 
@@ -135,19 +133,21 @@ def showData(owner, investment):
     col2.markdown("**Price**")
     col3.markdown("**Value (USD)**")
 
+    grand_total = 0
     for tick in cryptos:
-
+        data_sub = data[data['symbol'] == tick]
         sub_tick = sub[sub['Symbol'] == tick]
         total = getTotalAmount(sub_tick)
 
+        total_usd = total*data_sub['current_price'].values[0]
+        grand_total += total_usd
         col1.metric(tick, "{:,}".format(total))
-
-        col2.metric(tick + "-USD", "$"+getMetric(tick, 'price'))
-
-        col3.metric("Value (USD)", "$"+ str("{:,}".format(round(total*prices['data'][tick]['quote']['USD']['price'], 2))))
+        col2.metric(tick + "-USD", "$"+str(data_sub['current_price'].values[0]))
+        col3.metric("Value (USD)", "$"+ str("{:,}".format(round(total_usd, 2))))
 
 
     #st.dataframe(sum_amount)
+    st.header("Total Value (USD): $" + str("{:,}".format(round(grand_total,2))))
     st.write("Transaction History")
     st.dataframe(sub)
 
