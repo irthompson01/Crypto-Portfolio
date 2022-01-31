@@ -179,7 +179,10 @@ def getAllCGMetrics(coin_data):
     bad_keys = ['index', 'id', 'symbol', 'market_cap_rank', 'name', 'image', 'ath_date', 'atl_date', 'roi', 'last_updated', 'fully_diluted_valuation']
     for key in coin_data.keys():
         if key not in bad_keys:
-            st.write(key.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(coin_data[key],2))))
+            try:
+                st.write(key.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(coin_data[key],2))))
+            except TypeError:
+                pass
     #st.write(slug)
     # with col.expander(str(tick) + " Chart"):
     #     getCGChart(slug)
