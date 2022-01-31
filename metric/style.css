@@ -1,20 +1,30 @@
-.css-10vwi5d.e1tzin5v1{
+/*
+[class$="e1tzin5v1"]{
+  background-color: #854C94;
+  border: 1px solid #1C0645;
+  padding: 5px 5px 5px 5px;
+  border-radius: 5px;
+
+}*/
+.css-82vsbp.e1tzin5v4{
+  background-color: #565656 ;
+  border: 1px solid #1C0645;
+  padding: 5px 5px 5px 5px;
+  border-radius: 5px;
+
+}
+/* Make wild card for middle section https://www.geeksforgeeks.org/wildcard-selectors-and-in-css-for-classes/
+
+.css-1qipp0u.e1tzin5v1{
   background-color: #854C94;
   border: 1px solid #1C0645;
   padding: 5px 5px 5px 5px;
   border-radius: 5px;
 
 }
-
-.css-1e5lw08.e1tzin5v1{
-  background-color: #854C94;
-  border: 1px solid #1C0645;
-  padding: 5px 5px 5px 5px;
-  border-radius: 5px;
-
-}
-.css-10mqmgh.e1s6o5jp0 {
-  background-color: #1C0645;
+*/
+[class$="e1s6o5jp0"] {
+  background-color: #000000;
 
   border-radius: 5px;
 }
