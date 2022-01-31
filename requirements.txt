@@ -1,5 +1,4 @@
 pycoingecko
-time
 datetime
 requests
 pandas
