@@ -5,7 +5,6 @@ from requests import Request, Session
 import json
 import pycoingecko
 from pycoingecko import CoinGeckoAPI
-import time
 from datetime import datetime
 import altair as alt
 #import matplotlib.pyplot as plt
@@ -48,7 +47,12 @@ def load_CMC_data():
 @st.cache(allow_output_mutation=True)
 def load_CG_data():
     cg = CoinGeckoAPI()
+
     data = pd.DataFrame(cg.get_coins_markets(vs_currency = 'usd', order='market_cap_desc', price_change_percentage='1h,24h,7d,14d,30d,200d,1y'))
+    ergo_data = pd.DataFrame(cg.get_coins_markets(ids='ergo',vs_currency = 'usd', order='market_cap_desc', price_change_percentage='1h,24h,7d,14d,30d,200d,1y', limit=10))
+
+    data = pd.concat([data, ergo_data])
+
     data['symbol'] = data['symbol'].str.upper()
     data = data.reset_index()
     return data
@@ -94,18 +98,17 @@ def priceDataCG():
     st.title("Current Crypto Prices")
     col1, col2, col3 = st.columns(3)
     cols = [col1, col2, col3]# col3, col4]
-
-    symbols = ['BTC','ETH','ADA','XMR','ERG','LINK','VET','ALGO','LTC','HBAR','SOL','XRP','BNB','DOT','CRO','MATIC','FIL','ONE','LRC','LOOKS']
+    days = st.sidebar.selectbox("Chart Interval (Days)", (1, 3, 7, 14, 30))
+    symbols = ['BTC','ETH','ADA','XMR','ERG','LINK','VET','ALGO','LTC','HBAR','SOL','XRP','BNB','DOT','CRO','MATIC','FIL','ONE','LRC','LOOKS', 'XLM', 'ICP']
     #data_sub = data[data['symbol'].str.upper() in symbols]
     boolean_series = data['symbol'].isin(symbols)
     filtered_data = data[boolean_series]
     count = 0
     for index, row in filtered_data.iterrows():
-
         adj = count%len(cols)
         coin_data = row
         count += 1
-        displayCGMetric(cols[adj], coin_data['symbol'].upper(), coin_data['name'], coin_data)
+        displayCGMetric(cols[adj], coin_data['symbol'].upper(), coin_data['name'], coin_data, days)
 
     f.close()
 
@@ -128,12 +131,12 @@ def showData(owner, investment):
     ##### Breakdown by Coin #####
     cryptos = sub["Symbol"].unique()
     col1, col2, col3 = st.columns(3)
-    col1.subheader("Asset")
-    col2.subheader("Price")
-    col3.subheader("Value (USD)")
+    col1.markdown("**Asset**")
+    col2.markdown("**Price**")
+    col3.markdown("**Value (USD)**")
 
     for tick in cryptos:
-        col1, col2, col3 = st.columns(3)
+
         sub_tick = sub[sub['Symbol'] == tick]
         total = getTotalAmount(sub_tick)
 
@@ -159,15 +162,15 @@ def getTotalAmount(df):
         total += float(str(i).replace(',',''))
     return total
 
-def displayCGMetric(col, tick, slug, coin_data):
+def displayCGMetric(col, tick, slug, coin_data, days=7):
 
     with st.container():
         new_col1, new_col2 = st.columns(2)
         col.image(coin_data['image'], width = 50)
         col.metric(str(coin_data['market_cap_rank']) + '. ' + slug.capitalize()  + '-' + tick, "$"+str("{:,}".format(coin_data['current_price'])), str("{:,}".format(round(coin_data['price_change_percentage_24h_in_currency'], 2),',')+"%"))
 
-        with col.expander(str(tick) + " Chart(7d)"):
-            st.altair_chart(getCGChart(coin_data['id']))
+        with col.expander(str(tick) + " Chart(" + str(days) + "d)"):
+            st.altair_chart(getCGChart(coin_data['id'], days))
 
         with col.expander(str(tick) + " Metrics"):
             getAllCGMetrics(coin_data)
@@ -181,9 +184,10 @@ def getAllCGMetrics(coin_data):
     # with col.expander(str(tick) + " Chart"):
     #     getCGChart(slug)
 
-def getCGChart(id):
+@st.cache(allow_output_mutation=True)
+def getCGChart(id, days=7):
     cg = CoinGeckoAPI()
-    chart_data = pd.DataFrame(cg.get_coin_market_chart_by_id(id, 'usd', 7))
+    chart_data = pd.DataFrame(cg.get_coin_market_chart_by_id(id, 'usd', days))
 
     chart_data['index'] = range(0, len(chart_data))
 
@@ -212,11 +216,11 @@ def getCGChart(id):
                 y2=0
             )
         ).encode(
-            alt.X('index:Q', axis = alt.Axis(tickMinStep=10, title='', gridColor='darkgrey', gridOpacity=0.6)),
-            alt.Y('Price:Q', axis = alt.Axis(tickCount=4, gridColor='darkgrey', gridOpacity=0.6, labelColor='white'),
+            alt.X('index:Q', axis = alt.Axis(labels=False,tickMinStep=10, title='', gridColor='darkgrey', gridOpacity=0.6)),
+            alt.Y('Price:Q', axis = alt.Axis(format="$", tickCount=4, gridColor='darkgrey', gridOpacity=0.6, labelColor='white'),
                   scale=alt.Scale(domain=[chart_data['Price'].min(), chart_data['Price'].max()])),
             tooltip = alt.Tooltip('Price Format:N', title='Price')
-            ).properties(width=300, height=200)
+            ).properties(width=300, height=200).configure_view(strokeOpacity=0)
 
     return chart
 
