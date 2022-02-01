@@ -223,7 +223,7 @@ def getCGChart(id, days=7):
             alt.Y('Price:Q', axis = alt.Axis(format="$", tickCount=4, gridColor='darkgrey', gridOpacity=0.6, labelColor='white'),
                   scale=alt.Scale(domain=[chart_data['Price'].min(), chart_data['Price'].max()])),
             tooltip = alt.Tooltip('Price Format:N', title='Price')
-            ).properties(width=350, height=200).configure_view(strokeOpacity=0)
+            ).properties(width=300, height=200).configure_view(strokeOpacity=0)
 
     return chart
 
