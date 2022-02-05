@@ -2,3 +2,4 @@ pycoingecko
 datetime
 requests
 pandas
+streamlit_authenticator
