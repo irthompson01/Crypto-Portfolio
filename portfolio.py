@@ -1,13 +1,14 @@
 ##### IMPORTS #####
 import streamlit as st
+import streamlit_authenticator as stauth
 import pandas as pd
+import requests
 from requests import Request, Session
 import json
 import pycoingecko
 from pycoingecko import CoinGeckoAPI
 from datetime import datetime
 import altair as alt
-#import matplotlib.pyplot as plt
 
 ##### Set Page Config #####
 st.set_page_config(
@@ -25,23 +26,14 @@ def load_transaction_data():
     #del df['Unnamed: 0']
     return df
 
-##### Load CMC Data #####
-def load_CMC_data():
-    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
-
-    parameters = {
-        "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR,SOL,XRP,BNB,DOT,CRO,MATIC,FIL,ONE,LRC,LOOKS',
-        "convert": "USD"
-    }
-
-    headers = {
-        'Accepts':'application/json', #telling CMC API that we want json format in response
-        'X-CMC_PRO_API_KEY': 'c57ac442-3e7c-4a75-8d1f-a18e34b9bce6' #Auth token -
-        }
-    session = Session()
-    session.headers.update(headers)
-    response = session.get(url, params=parameters)
-    response = json.loads(response.text)
+##### Load Users Data #####
+def load_users():
+    file = './users.csv'
+    users = pd.read_csv(file)
+    return users
+##### Load 2Miners Data #####
+def load_2miners():
+    response = requests.get("https://eth.2miners.com/api/accounts/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b").json()
     return response
 
 @st.cache(allow_output_mutation=True)
@@ -57,35 +49,84 @@ def load_CG_data():
     data = data.reset_index()
     return data
 
-prices = load_CMC_data()
 df = load_transaction_data()
 data = load_CG_data()
-
+users = load_users()
 
 def main():
     ##  9285011099Seismic# ##
     ##### SIDEBAR #####
+    names = users['name'].to_list()
+    usernames = users['username'].to_list()
+    passwords = users['password'].to_list()
+    initials = users['initial'].to_list()
+    hashed_passwords = stauth.hasher(passwords).generate()
+    authenticator = stauth.authenticate(names, usernames,hashed_passwords,'some_cookie_name','some_signature_key',cookie_expiry_days=30)
+    name, authentication_status = authenticator.login('Login','sidebar')
 
-    st.sidebar.title("Select a Portfolio:")
-    portfolio = st.sidebar.selectbox(
-     '',
-     ('Home','Ross & Amy', 'Casey y Luca', 'Smidget', 'Resources'))
+    pair = {"RA": "2,500", "CL": "3,000", "BT" : "100"}
 
-    if portfolio == 'Home':
-         #priceData()
-         priceDataCG()
+    if authentication_status:
+        sub_user = users[users['name'] == name]
+        initial = sub_user['initial'].values[0]
+        password = sub_user['password'].values[0]
+        username = sub_user['username'].values[0]
+        st.sidebar.write('Welcome *%s*' % (name))
 
-    elif portfolio == 'Ross & Amy':
-        showData("RA", "2,500")
+        st.sidebar.title("Select an Option:")
+        portfolio = st.sidebar.selectbox(
+         '',
+         ('Portfolio', 'Crypto Prices', '2Miners Stats', 'Resources', 'Settings'))
 
-    elif portfolio == 'Casey y Luca':
-        showData("CL", "3,000")
+        if portfolio == 'Crypto Prices':
+             #priceData()
+             priceDataCG()
 
-    elif portfolio == 'Smidget':
-        showData("BT", "100")
+        elif portfolio == 'Portfolio':
+            showData(initial, pair[initial])
 
-    elif portfolio == 'Resources':
-        showResources()
+        elif portfolio == 'Resources':
+            showResources()
+
+        elif portfolio == '2Miners Stats':
+            show2Miners()
+
+        elif portfolio == 'Settings':
+            showSettings(username, password)
+
+    elif authentication_status == False:
+        st.error('Username/password is incorrect')
+    elif authentication_status == None:
+        st.warning('Please enter your username and password')
+
+
+def showSettings(username, password):
+    df = pd.read_csv("./users.csv")
+
+    #with st.expander("Change Username"):
+    with st.form("Change Username"):
+
+        new_username = st.text_input("Enter New Username")
+        submitted = st.form_submit_button("Submit")
+
+        if submitted:
+            df['username'] = df['username'].replace({username: new_username})
+            df.to_csv("./users.csv", index=False)
+    # updating the column value/data
+
+
+
+    #with st.expander("Change Password"):
+    with st.form("Change Password"):
+
+        new_password = st.text_input("Enter New Password")
+        submitted = st.form_submit_button("Submit")
+
+        if submitted:
+            df['password'] = df['password'].replace({password: new_password})
+            df.to_csv("./users.csv", index=False)
+    # updating the column value/data
+    # writing into the file
 
 
 def priceDataCG():
@@ -227,10 +268,6 @@ def getCGChart(id, days=7):
 
     return chart
 
-def getMetric(tick, metric):
-    metric = "{:,}".format(round(prices['data'][tick]['quote']['USD'][metric], 2))
-    return str(metric)
-
 def showResources():
     col1, col2 = st.columns(2)
     col1.subheader("What is Blockchain?")
@@ -242,35 +279,90 @@ def showResources():
     col2.subheader('What is Cardano?')
     col2.video('https://www.youtube.com/watch?v=Do8rHvr65ZA')
 
+def rewardsChart(rewards):
+    chart = alt.Chart(rewards).configure(background='black').mark_area(
+            line={'color':'orange'},
+            color=alt.Gradient(
+                gradient='linear',
+                stops=[alt.GradientStop(color='white', offset=0),
+                       alt.GradientStop(color='orange', offset=1)],
+                x1=1,
+                x2=1,
+                y1=1,
+                y2=0
+            )
+        ).encode(
+            alt.X('blockheight:Q', axis = alt.Axis(labels=True,tickMinStep=10, title='Blockheight', gridColor='darkgrey', gridOpacity=0.6)),
+            alt.Y('reward:Q', axis = alt.Axis(title="Reward (ETH)", tickCount=4, gridColor='darkgrey', gridOpacity=0.6, labelColor='white'),
+                  scale=alt.Scale(domain=[rewards['reward'].min(), rewards['reward'].max()])),
+            tooltip = alt.Tooltip('reward:N', title='reward')
+            ).properties(width=1000, height=600).configure_view(strokeOpacity=0)
+    return chart
 
-def priceData():
-    ##### Custom Style #####
-    with open('./metric/style.css') as f:
-        st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
+def show2Miners():
+    response = load_2miners()
+    currentHashrate = round((response['currentHashrate']/1000000),2)
+    avgHashrate = round((response['hashrate']/1000000), 2)
+    rewards = pd.DataFrame(response['rewards'])
+    link = 'https://eth.2miners.com/account/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b#rewards'
+    st.markdown(" # [2Miners-ETH-Statistics] (https://eth.2miners.com/account/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b#rewards)")
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Current Hashrate", str(currentHashrate) + " MH/s")
+    col2.metric("Average Hashrate", str(avgHashrate) + " MH/s")
+    st.altair_chart(rewardsChart(rewards))
 
-    st.title("Current Crypto Prices")
-    col1, col2, col3, col4 = st.columns([1,1,1, 1])
-    cols = [col1, col2, col3, col4]
+def getMetric(tick, metric):
+    metric = "{:,}".format(round(prices['data'][tick]['quote']['USD'][metric], 2))
+    return str(metric)
 
-    ticks = [tick for tick in prices['data']]
 
-    for t in range(len(ticks)):
-        adj = t%len(cols)
-        displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
 
-    f.close()
-
-def displayMetric(col, tick, slug):
-
-    with st.container():
-        col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
-        with col.expander(str(tick) + " Metrics"):
-            getAllMetrics(tick)
-
-def getAllMetrics(tick):
-    for i in prices['data'][tick]['quote']['USD']:
-        if i != 'last_updated':
-            st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
+# def priceData():
+#     ##### Custom Style #####
+#     with open('./metric/style.css') as f:
+#         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
+#
+#     st.title("Current Crypto Prices")
+#     col1, col2, col3, col4 = st.columns([1,1,1, 1])
+#     cols = [col1, col2, col3, col4]
+#
+#     ticks = [tick for tick in prices['data']]
+#
+#     for t in range(len(ticks)):
+#         adj = t%len(cols)
+#         displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
+#
+#     f.close()
+#
+# def displayMetric(col, tick, slug):
+#
+#     with st.container():
+#         col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
+#         with col.expander(str(tick) + " Metrics"):
+#             getAllMetrics(tick)
+#
+# def getAllMetrics(tick):
+#     for i in prices['data'][tick]['quote']['USD']:
+#         if i != 'last_updated':
+#             st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
+# ##### Load CMC Data #####
+# def load_CMC_data():
+#     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
+#
+#     parameters = {
+#         "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR,SOL,XRP,BNB,DOT,CRO,MATIC,FIL,ONE,LRC,LOOKS',
+#         "convert": "USD"
+#     }
+#
+#     headers = {
+#         'Accepts':'application/json', #telling CMC API that we want json format in response
+#         'X-CMC_PRO_API_KEY': 'c57ac442-3e7c-4a75-8d1f-a18e34b9bce6' #Auth token -
+#         }
+#     session = Session()
+#     session.headers.update(headers)
+#     response = session.get(url, params=parameters)
+#     response = json.loads(response.text)
+#     return response
 
 if __name__ == "__main__":
     main()
