@@ -64,7 +64,7 @@ def main():
     authenticator = stauth.authenticate(names, usernames,hashed_passwords,'some_cookie_name','some_signature_key',cookie_expiry_days=30)
     name, authentication_status = authenticator.login('Login','sidebar')
 
-    pair = {"RA": "2,500", "CL": "3,000", "BT" : "100"}
+    pair = {"RA": "2,500", "CL": "3,000", "BT" : "200"}
 
     if authentication_status:
         sub_user = users[users['name'] == name]
@@ -305,7 +305,7 @@ def show2Miners():
     avgHashrate = round((response['hashrate']/1000000), 2)
     rewards = pd.DataFrame(response['rewards'])
     link = 'https://eth.2miners.com/account/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b#rewards'
-    st.markdown(" # [2Miners-ETH-Statistics] (https://eth.2miners.com/account/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b#rewards)")
+    st.markdown("#[2Miners-ETH-Statistics] (https://eth.2miners.com/account/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b#rewards)")
     col1, col2, col3 = st.columns(3)
     col1.metric("Current Hashrate", str(currentHashrate) + " MH/s")
     col2.metric("Average Hashrate", str(avgHashrate) + " MH/s")
