@@ -36,7 +36,7 @@ def load_2miners():
     response = requests.get("https://eth.2miners.com/api/accounts/0x7Dd7Ed27B5dC8b779cB68C287DF8046194959e4b").json()
     return response
 
-@st.cache(allow_output_mutation=True)
+@st.cache(ttl=300, allow_output_mutation=True)
 def load_CG_data():
     cg = CoinGeckoAPI()
 
@@ -64,7 +64,7 @@ def main():
     authenticator = stauth.authenticate(names, usernames,hashed_passwords,'some_cookie_name','some_signature_key',cookie_expiry_days=30)
     name, authentication_status = authenticator.login('Login','sidebar')
 
-    pair = {"RA": "2,500", "CL": "3,000", "BT" : "200"}
+    pair = {"RA": "3,500", "CL": "3,000", "BT" : "200"}
 
     if authentication_status:
         sub_user = users[users['name'] == name]
@@ -171,8 +171,8 @@ def showData(owner, investment):
     cryptos = sub["Symbol"].unique()
     col1, col2, col3 = st.columns(3)
     col1.markdown("**Asset**")
-    col2.markdown("**Price**")
-    col3.markdown("**Value (USD)**")
+    col2.markdown("**Current Price**")
+    col3.markdown("**Holdings (USD)**")
 
     grand_total = 0
     for tick in cryptos:
@@ -182,9 +182,9 @@ def showData(owner, investment):
 
         total_usd = total*data_sub['current_price'].values[0]
         grand_total += total_usd
-        col1.metric(tick, "{:,}".format(total))
-        col2.metric(tick + "-USD", "$"+str(data_sub['current_price'].values[0]))
-        col3.metric("Value (USD)", "$"+ str("{:,}".format(round(total_usd, 2))))
+        col1.metric(tick, "{:,}".format(round(total, 4)))
+        col2.metric(tick + "-USD", "$"+str("{:,}".format(round(data_sub['current_price'].values[0],4))))
+        col3.metric(tick + " Holdings (USD)", "$"+ str("{:,}".format(round(total_usd, 2))))
 
 
     #st.dataframe(sum_amount)
