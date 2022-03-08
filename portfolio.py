@@ -9,6 +9,7 @@ import pycoingecko
 from pycoingecko import CoinGeckoAPI
 from datetime import datetime
 import altair as alt
+from csv import writer
 
 ##### Set Page Config #####
 st.set_page_config(
@@ -64,13 +65,38 @@ def main():
     authenticator = stauth.authenticate(names, usernames,hashed_passwords,'some_cookie_name','some_signature_key',cookie_expiry_days=30)
     name, authentication_status = authenticator.login('Login','sidebar')
 
-    pair = {"RA": "3,500", "CL": "3,000", "BT" : "200"}
+    ### Create New User ###
+    df = pd.read_csv("./users.csv")
+    if not authentication_status:
+        with st.expander("Create Account"):
+            with st.form("Create Account"):
+                create_name = st.text_input("Enter Your Name")
+                create_un = st.text_input("Enter a Username")
+                create_pw = st.text_input("Enter a Password")
+                create_init = st.text_input("Enter preferred Initials")
+                new_acct_info = [create_init, create_un, create_name, create_pw, 0]
+                submitted = st.form_submit_button("Submit")
+
+                if submitted:
+                    if create_un in usernames:
+                        st.error('Username Taken')
+                    else:
+                        with open("./users.csv", 'a') as user_obj:
+                            writer_object = writer(user_obj)
+                            writer_object.writerow(new_acct_info)
+                            user_obj.close()
+                            st.success("Account Created, Please Login on the Left")
+
+
+
+
 
     if authentication_status:
         sub_user = users[users['name'] == name]
         initial = sub_user['initial'].values[0]
         password = sub_user['password'].values[0]
         username = sub_user['username'].values[0]
+        investment = sub_user['investment'].values[0]
         st.sidebar.write('Welcome *%s*' % (name))
 
         st.sidebar.title("Select an Option:")
@@ -83,7 +109,7 @@ def main():
              priceDataCG()
 
         elif portfolio == 'Portfolio':
-            showData(initial, pair[initial])
+            showData(initial, username, investment)
 
         elif portfolio == 'Resources':
             showResources()
@@ -128,7 +154,6 @@ def showSettings(username, password):
     # updating the column value/data
     # writing into the file
 
-
 def priceDataCG():
     ##### Custom Style #####
     with open('./metric/style.css') as f:
@@ -151,7 +176,7 @@ def priceDataCG():
 
     f.close()
 
-def showData(owner, investment):
+def showData(owner, username, investment=0):
     '''
     Candle Stick Chart:         https://altair-viz.github.io/gallery/candlestick_chart.html
     Area Chart With Gradient:   https://altair-viz.github.io/gallery/area_chart_gradient.html
@@ -160,13 +185,13 @@ def showData(owner, investment):
     with open('./showData/style.css') as f:
         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
 
+
     port_dict = {"RA": "Ross & Amy", "CL": "Casey y Luca", "BT": "Smidget"}
-    st.title(port_dict[owner] + "'s Crypto Portfolio")
+    st.title(username + "'s Crypto Portfolio")
+    st.header("Investment: $" + str(investment))
+
     sub = df[df['Owner'] == owner]
-
     ##### Total Invested/Current Value #####
-    st.header("Investment: $" + investment)
-
     ##### Breakdown by Coin #####
     cryptos = sub["Symbol"].unique()
     col1, col2, col3 = st.columns(3)
@@ -186,9 +211,36 @@ def showData(owner, investment):
         col2.metric(tick + "-USD", "$"+str("{:,}".format(round(data_sub['current_price'].values[0],4))))
         col3.metric(tick + " Holdings (USD)", "$"+ str("{:,}".format(round(total_usd, 2))))
 
-
     #st.dataframe(sum_amount)
     st.header("Total Value (USD): $" + str("{:,}".format(round(grand_total,2))))
+
+    symbols = ('BTC','ETH','ADA','XMR','ERG','LINK','VET','ALGO','LTC','HBAR','SOL','XRP','BNB','DOT','CRO','MATIC','FIL','ONE','LRC','LOOKS', 'XLM', 'ICP')
+
+    with st.expander("Add a Transaction"):
+        with st.form("New Txn"):
+            form_ticker = st.selectbox("Ticker", symbols)
+            form_date = st.date_input("Date")
+            form_amt = st.number_input("Amount")
+            form_price = st.number_input("Price")
+            form_total = st.number_input("Total Spent (w/ fees)")
+            submitted = st.form_submit_button("Add Transaction")
+            data_sub = data[data['symbol'] == form_ticker]
+            crypto_name = data_sub['name'].values[0]
+            if submitted:
+
+
+                txn_info = [owner, crypto_name, form_ticker, form_amt, form_date, form_price, form_total]
+                with open("./transactions.csv", 'a') as txn_obj:
+                    writer_object = writer(txn_obj)
+                    writer_object.writerow(txn_info)
+                    txn_obj.close()
+
+
+                users['investment'] = users['investment'].replace({investment: investment+form_total})
+                users.to_csv("./users.csv", index=False)
+                st.success("Transaction Submitted, Please Refresh Your Browser")
+
+
     st.write("Transaction History")
     st.dataframe(sub)
 
@@ -316,53 +368,54 @@ def getMetric(tick, metric):
     return str(metric)
 
 
-
-# def priceData():
-#     ##### Custom Style #####
-#     with open('./metric/style.css') as f:
-#         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
-#
-#     st.title("Current Crypto Prices")
-#     col1, col2, col3, col4 = st.columns([1,1,1, 1])
-#     cols = [col1, col2, col3, col4]
-#
-#     ticks = [tick for tick in prices['data']]
-#
-#     for t in range(len(ticks)):
-#         adj = t%len(cols)
-#         displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
-#
-#     f.close()
-#
-# def displayMetric(col, tick, slug):
-#
-#     with st.container():
-#         col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
-#         with col.expander(str(tick) + " Metrics"):
-#             getAllMetrics(tick)
-#
-# def getAllMetrics(tick):
-#     for i in prices['data'][tick]['quote']['USD']:
-#         if i != 'last_updated':
-#             st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
-# ##### Load CMC Data #####
-# def load_CMC_data():
-#     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
-#
-#     parameters = {
-#         "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR,SOL,XRP,BNB,DOT,CRO,MATIC,FIL,ONE,LRC,LOOKS',
-#         "convert": "USD"
-#     }
-#
-#     headers = {
-#         'Accepts':'application/json', #telling CMC API that we want json format in response
-#         'X-CMC_PRO_API_KEY': 'c57ac442-3e7c-4a75-8d1f-a18e34b9bce6' #Auth token -
-#         }
-#     session = Session()
-#     session.headers.update(headers)
-#     response = session.get(url, params=parameters)
-#     response = json.loads(response.text)
-#     return response
+def CMC_data_old():
+    pass
+    # def priceData():
+    #     ##### Custom Style #####
+    #     with open('./metric/style.css') as f:
+    #         st.markdown(f'<style>{f.read()}<style>', unsafe_allow_html=True)
+    #
+    #     st.title("Current Crypto Prices")
+    #     col1, col2, col3, col4 = st.columns([1,1,1, 1])
+    #     cols = [col1, col2, col3, col4]
+    #
+    #     ticks = [tick for tick in prices['data']]
+    #
+    #     for t in range(len(ticks)):
+    #         adj = t%len(cols)
+    #         displayMetric(cols[adj], ticks[t], getSlug(ticks[t]))
+    #
+    #     f.close()
+    #
+    # def displayMetric(col, tick, slug):
+    #
+    #     with st.container():
+    #         col.metric(slug.capitalize()  + '-' + tick, "$"+getMetric(tick, 'price'), getMetric(tick, 'percent_change_24h')+"%")
+    #         with col.expander(str(tick) + " Metrics"):
+    #             getAllMetrics(tick)
+    #
+    # def getAllMetrics(tick):
+    #     for i in prices['data'][tick]['quote']['USD']:
+    #         if i != 'last_updated':
+    #             st.write(i.replace("_", " ").capitalize() + ": " + str("{:,}".format(round(prices['data'][tick]['quote']['USD'][i], 2))))
+    # ##### Load CMC Data #####
+    # def load_CMC_data():
+    #     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
+    #
+    #     parameters = {
+    #         "symbol": 'BTC,ETH,ADA,XMR,ERG,LINK,VET,ALGO,LTC,HBAR,SOL,XRP,BNB,DOT,CRO,MATIC,FIL,ONE,LRC,LOOKS',
+    #         "convert": "USD"
+    #     }
+    #
+    #     headers = {
+    #         'Accepts':'application/json', #telling CMC API that we want json format in response
+    #         'X-CMC_PRO_API_KEY': 'c57ac442-3e7c-4a75-8d1f-a18e34b9bce6' #Auth token -
+    #         }
+    #     session = Session()
+    #     session.headers.update(headers)
+    #     response = session.get(url, params=parameters)
+    #     response = json.loads(response.text)
+    #     return response
 
 if __name__ == "__main__":
     main()

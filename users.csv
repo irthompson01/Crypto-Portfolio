@@ -1,4 +1,5 @@
-initial,username,name,password
-BT,b4smidge,Bridget,123four
-CL,cmoney$,Casey y Luca,123four
-RA,pomandpops,Ross & Amy,123four
+initial,username,name,password,investment
+BT,b4smidge,Smidget,123four,300
+CL,cmoney$,Casey y Luca,123four,3000
+RA,pomandpops,Ross & Amy,123four,3500
+MA,admin,Master Admin,master,0
