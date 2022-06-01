@@ -1,27 +1,24 @@
-﻿Owner,Crypto,Symbol,Amount,Date of Transaction,Price,Total Amount
-RA,Cardano,ADA,2063.83,3/20/2021,0.7268,1500
-CL,Cardano,ADA,260.3,3/20/2021,0.96,250
-CL,Cardano,ADA,2534.95,4/8/2021,1.08,2750
-RA,Cardano,ADA,100,1/8/2022,1.1,110
-RA,Ethereum,ETH,0.10259052 ,1/8/2022,3200.5,330
-RA,Cardano,ADA,206.88,1/8/2022,1.202,250
-RA,Cardano,ADA,100.29,1/9/2022,1.1904,120
-RA,Algorand,ALGO,138.79,1/15/2022,1.369,190
-BT,Ethereum,ETH,0.02,1/24/2022,2500,50
-BT,Cardano,ADA,48,1/24/2022,1.041,50
-BT,Ethereum,ETH,0.01603,2/7/2022,3119.15,50
-BT,Cardano,ADA,42.59,2/7/2022,1.165,50
-RA,Cardano,ADA,224,2/15/2022,1.05,235.2
-RA,Ethereum,ETH,0.2,2/16/2022,2990,598
-RA,Chainlink,LINK,10,2/15/2022,16.67,166.7
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
-,,,,,,
+﻿Owner,Crypto,Symbol,Amount,Date of Transaction,Price,Total_Amount,index,,,
+RA,Cardano,ADA,2063.83,3/20/2021,0.7268,1500,1,,,
+CL,Cardano,ADA,260.3,3/20/2021,0.96,250,2,,,
+CL,Cardano,ADA,2534.95,4/8/2021,1.08,2750,3,,,
+RA,Cardano,ADA,100,1/8/2022,1.1,110,4,,,
+RA,Ethereum,ETH,0.10259052 ,1/8/2022,3200.5,330,5,,,
+RA,Cardano,ADA,206.88,1/8/2022,1.202,250,6,,,
+RA,Cardano,ADA,100.29,1/9/2022,1.1904,120,7,,,
+RA,Algorand,ALGO,138.79,1/15/2022,1.369,190,8,,,
+BT,Ethereum,ETH,0.02,1/24/2022,2500,50,9,,,
+BT,Cardano,ADA,48,1/24/2022,1.041,50,10,,,
+BT,Ethereum,ETH,0.01603,2/7/2022,3119.15,50,11,,,
+BT,Cardano,ADA,42.59,2/7/2022,1.165,50,12,,,
+RA,Cardano,ADA,224,2/15/2022,1.05,235.2,13,,,
+RA,Ethereum,ETH,0.2,2/16/2022,2990,598,14,,,s
+RA,Chainlink,LINK,10,2/15/2022,16.67,166.7,15,,,
+RA,Cardano,ADA,289,3/31/2022,1.14,329.9,16,,,
+RA,Cardano,ADA,292,3/31/2022,1.16,340.18,17,,,
+RA,Cardano,ADA,400,3/15/2022,0.7995,319.8,18,,,
+RA,Cardano,ADA,300,4/17/2022,0.89,267,19,,,
+RA,Ethereum,ETH,0.10624,4/17/2022,2899,307.99,20,,,
+RA,Cardano,ADA,446,4/20/2022,0.94,425,21,,,
+RA,Cardano,ADA,448.6,5/16/2022,0.53,237.75,22,,,
+RA,Ethereum,ETH,0.25,5/17/2022,1992,498,23,,,
