@@ -61,8 +61,7 @@ def main():
     usernames = users['username'].to_list()
     passwords = users['password'].to_list()
     initials = users['initial'].to_list()
-    hashed_passwords = stauth.hasher(passwords).generate()
-    authenticator = stauth.authenticate(names, usernames,hashed_passwords,'some_cookie_name','some_signature_key',cookie_expiry_days=30)
+    authenticator = stauth.authenticate(names, usernames, passwords,'some_cookie_name','some_signature_key',cookie_expiry_days=30)
     name, authentication_status = authenticator.login('Login','sidebar')
 
     ### Create New User ###
@@ -215,6 +214,11 @@ def showData(owner, username, investment=0):
     st.header("Total Value (USD): $" + str("{:,}".format(round(grand_total,2))))
 
     symbols = ('BTC','ETH','ADA','XMR','ERG','LINK','VET','ALGO','LTC','HBAR','SOL','XRP','BNB','DOT','CRO','MATIC','FIL','ONE','LRC','LOOKS', 'XLM', 'ICP')
+
+    #######################
+    ### ADD TRANSACTION ###
+    #######################
+
 
     with st.expander("Add a Transaction"):
         with st.form("New Txn"):
